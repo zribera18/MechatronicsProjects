@@ -7,6 +7,7 @@ import socket
 import base64
 from threading import Thread
 import sys
+import json
 
 HOST = 'localhost'
 PORT = 8888
@@ -20,7 +21,7 @@ tcpServerSock.listen(50)
 while True:
     print 'Waiting for connection....'
     tcpClientSock, addr = tcpServerSock.accept()
-    print '\nConnected from: ', addr
+    print '\nConnected with: ', addr
     try :
         encodedData = base64.standard_b64encode(b'Um hello, welcome to the chat room!')
         tcpClientSock.send(encodedData)
@@ -30,11 +31,18 @@ while True:
 
     def recv():
         while True:
-            data = tcpClientSock.recv(BUFSIZE)
-            decodedData = base64.standard_b64decode(data)
-            if not data: sys.exit(0)
-            print '\n<<' + decodedData
-        
+            try:
+                data = tcpClientSock.recv(BUFSIZE)
+                decodedData = base64.standard_b64decode(data)
+                decodedJson = json.loads(decodedData)
+                if decodedJson[1]["Message"] == "":
+                    print "No Data"
+                else:
+                    print '\n<< [' + decodedJson[0]["IP"] +"] " +  decodedJson[1]["Message"]
+            except:
+                print '\nDisconnected with: ', addr
+                tcpClientSock.close()
+                sys.exit()
     Thread(target = recv).start()
     while True:
         data = raw_input('')
